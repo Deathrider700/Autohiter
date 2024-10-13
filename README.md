@@ -4,10 +4,6 @@ This project is an automated script that interacts with the Buy Me a Coffee plat
 
 ## Table of Contents
 - [Installation](#installation)
-- [Usage](#usage)
-- [Commands](#commands)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Installation
 
