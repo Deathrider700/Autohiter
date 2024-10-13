@@ -120,7 +120,7 @@ async function simulatePayment(card, influencerUrl, gmailAddress) {
         if (bodyContent.includes("Your card has been declined")) {
             console.log("❌ Card was declined.");
             await browser.close();
-            return { success: false, reason: "Card declined" }; // Change reason to "Card declined"
+            return { success: false, reason: "Card declined" };
         }
 
         if (
@@ -143,9 +143,8 @@ async function simulatePayment(card, influencerUrl, gmailAddress) {
             return { success: true, reason: "Payment successful" };
         }
 
-        // Removed logging of unknown failures
         await browser.close();
-        return { success: false, reason: "Card declined" }; // Treat other cases as declined
+        return { success: false, reason: "Card declined" };
     } catch (error) {
         console.error(`Error during payment processing: ${error.message}`);
         await browser.close();
@@ -171,11 +170,16 @@ async function main() {
                 if (result.success) {
                     console.log(`✅ Payment successful: ${result.reason}`);
                 } else {
-                    console.log(`❌ Payment failed: ${result.reason}`); // Will now indicate if the card was declined without further details
+                    console.log(`❌ Payment failed: ${result.reason}`);
                 }
 
                 cards = cards.filter(c => c.number !== card.number);
                 saveCardsToFile('cards.txt', cards);
+
+                // Trigger garbage collection after each card processing
+                if (global.gc) {
+                    global.gc();  // Manually trigger garbage collection
+                }
 
                 const delay = Math.floor(Math.random() * 6) + 10;
                 await new Promise(resolve => setTimeout(resolve, delay * 1000));
