@@ -14,7 +14,7 @@ fi
 
 # Add thehub command alias to the config file
 if ! grep -q "alias thehub" "$config_file"; then
-    echo "alias thehub='node --max-old-space-size=12288 autopay.js'" >> "$config_file"
+    echo "alias thehub='node --max-old-space-size=4096 autopay.js'" >> "$config_file"
     echo "Added 'thehub' command to your $config_file."
 else
     echo "'thehub' command is already added to your $config_file."
