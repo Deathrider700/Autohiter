@@ -72,7 +72,7 @@ function monitorCardsFile() {
 // Automate browser interaction for payment simulation
 async function simulatePayment(card, influencerUrl, gmailAddress) {
     const browser = await chromium.launch({
-        headless: true,
+        headless: true, // Set to true to run the browser in headless mode
         args: [
             '--enable-unsafe-swiftshader',
             '--disable-web-security',
@@ -120,7 +120,7 @@ async function simulatePayment(card, influencerUrl, gmailAddress) {
         if (bodyContent.includes("Your card has been declined")) {
             console.log("❌ Card was declined.");
             await browser.close();
-            return { success: false, reason: "Card was declined" };
+            return { success: false, reason: "Card declined" }; // Change reason to "Card declined"
         }
 
         if (
@@ -143,10 +143,9 @@ async function simulatePayment(card, influencerUrl, gmailAddress) {
             return { success: true, reason: "Payment successful" };
         }
 
-        // Log unknown failures with content for debugging
-        console.log(`❌ Unknown failure. Page content:\n${bodyContent}`);
+        // Removed logging of unknown failures
         await browser.close();
-        return { success: false, reason: "Unknown failure" };
+        return { success: false, reason: "Card declined" }; // Treat other cases as declined
     } catch (error) {
         console.error(`Error during payment processing: ${error.message}`);
         await browser.close();
@@ -172,7 +171,7 @@ async function main() {
                 if (result.success) {
                     console.log(`✅ Payment successful: ${result.reason}`);
                 } else {
-                    console.log(`❌ Payment failed: ${result.reason}`);
+                    console.log(`❌ Payment failed: ${result.reason}`); // Will now indicate if the card was declined without further details
                 }
 
                 cards = cards.filter(c => c.number !== card.number);
