@@ -35,7 +35,7 @@ def generate_cvv():
     return str(random.randint(100, 999))
 
 def main():
-    total_cards = 1000000000  # 1 billion cards
+    total_cards = 10000000  # 1 billion cards
     chunk_size = 1000000  # Write to the file in chunks to avoid memory overflow
     file_name = 'cards.txt'
     
