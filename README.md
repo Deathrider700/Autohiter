@@ -16,4 +16,4 @@ This project is an automated script that interacts with the Buy Me a Coffee plat
 Make sure you have **Node.js** and **npm** installed. You can install them using the following commands:
 
 ```bash
-sudo apt update && sudo apt install nodejs npm && npm install -g playwright && playwright install && npx playwright install && chmod +x hub.sh && ./hub.sh && source ~/.bashrc
+sudo apt update && apt install git && sudo apt install nodejs npm && npm install -g playwright && playwright install && npx playwright install && chmod +x hub.sh && ./hub.sh && source ~/.bashrc
