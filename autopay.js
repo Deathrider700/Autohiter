@@ -72,7 +72,7 @@ function monitorCardsFile() {
 // Automate browser interaction for payment simulation
 async function simulatePayment(card, influencerUrl, gmailAddress) {
     const browser = await chromium.launch({
-        headless: true, // Set to true to run the browser in headless mode
+        headless: true, // Set to true to run the browser in headless mode (no UI)
         args: [
             '--enable-unsafe-swiftshader',
             '--disable-web-security',
@@ -181,8 +181,7 @@ async function main() {
                     global.gc();  // Manually trigger garbage collection
                 }
 
-                const delay = Math.floor(Math.random() * 6) + 10;
-                await new Promise(resolve => setTimeout(resolve, delay * 1000));
+                // No delay after processing each card
             }
 
             rl.close();
