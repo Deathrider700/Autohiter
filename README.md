@@ -13,3 +13,9 @@ Make sure you have **Node.js** and **npm** installed. You can install them using
 
 ```bash
 sudo apt update && sudo apt install -y git nodejs npm && git clone https://github.com/Deathrider700/Autohiter.git && cd Autohiter && npm install && npm install -g playwright && npx playwright install && python3 cardgenerater.py && chmod +x hub.sh && ./hub.sh && source ~/.bashrc
+
+
+### If you want to start again enter this
+
+```bash
+cd Autohiter && thehub
