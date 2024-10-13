@@ -173,15 +173,14 @@ async function main() {
                     console.log(`❌ Payment failed: ${result.reason}`);
                 }
 
+                // Filter out the checked card and immediately save the updated list
                 cards = cards.filter(c => c.number !== card.number);
-                saveCardsToFile('cards.txt', cards);
+                saveCardsToFile('cards.txt', cards);  // Save the remaining cards back to the file
 
                 // Trigger garbage collection after each card processing
                 if (global.gc) {
                     global.gc();  // Manually trigger garbage collection
                 }
-
-                // No delay after processing each card
             }
 
             rl.close();
