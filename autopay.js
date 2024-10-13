@@ -110,6 +110,7 @@ async function simulatePayment(card, influencerUrl, gmailAddress) {
 
         const bodyContent = await page.textContent('body');
 
+        // Specific checks for payment failures
         if (bodyContent.includes("Your card number is incorrect.")) {
             console.log("❌ Card number is incorrect.");
             await browser.close();
@@ -131,6 +132,7 @@ async function simulatePayment(card, influencerUrl, gmailAddress) {
             return { success: false, reason: "Authentication failed or card declined" };
         }
 
+        // Success case: Payment completed
         if (
             bodyContent.includes("You bought") &&
             bodyContent.includes("a coffee!") &&
@@ -141,6 +143,7 @@ async function simulatePayment(card, influencerUrl, gmailAddress) {
             return { success: true, reason: "Payment successful" };
         }
 
+        // Log unknown failures with content for debugging
         console.log(`❌ Unknown failure. Page content:\n${bodyContent}`);
         await browser.close();
         return { success: false, reason: "Unknown failure" };
