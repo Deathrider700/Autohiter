@@ -44,7 +44,7 @@ def generate_cvv():
 
 def main():
     verified_ccs = []
-    total_cards = 1000000
+    total_cards = 100000
     print(f"Generating {total_cards} valid Visa card numbers...")
     
     for i in range(total_cards):
