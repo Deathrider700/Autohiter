@@ -93,7 +93,7 @@ async function processCardsFromFile(filePath, influencerUrl) {
                 console.log(`❌ ${cardDetails} Payment failed: ${result.reason}`);
             }
 
-            // Remove the card from the file (mark it as processed)
+            // Remove the card from the file (i.e., mark it as processed)
             fileContent = fileContent.replace(`${cardInfo}\n`, ''); // Remove the processed card line
             fs.writeFileSync(filePath, fileContent, 'utf-8'); // Update the file after removing the card
 
@@ -105,9 +105,9 @@ async function processCardsFromFile(filePath, influencerUrl) {
     // Save approved cards to a file
     if (approvedCards.length > 0) {
         fs.writeFileSync('approved_cards.txt', approvedCards.join('\n'), 'utf-8');
-        console.log(`Approved cards have been saved to 'approved_cards.txt'.`);
+        console.log(`✅ Approved cards have been saved to 'approved_cards.txt'.`);
     } else {
-        console.log('No approved cards found.');
+        console.log('❌ No approved cards found.');
     }
 }
 
@@ -116,48 +116,48 @@ function checkCardCountAndGenerate(filePath) {
     const cardCount = fs.readFileSync(filePath, 'utf-8').split('\n').length;
 
     if (cardCount <= 50) {
-        console.log("Card count is low, starting card generation...");
+        console.log("⚠️ Card count is low, starting card generation...");
         // Start the card generator Python script
         const generatorProcess = spawn('python3', [path.join(__dirname, 'cardgenerator.py')]);
 
         generatorProcess.stdout.on('data', (data) => {
-            console.log(`Card Generator: ${data}`);
+            console.log(`🔄 Card Generator: ${data}`);
         });
 
         generatorProcess.stderr.on('data', (data) => {
-            console.error(`Card Generator Error: ${data}`);
+            console.error(`❌ Card Generator Error: ${data}`);
         });
 
         generatorProcess.on('close', (code) => {
-            console.log(`Card Generator exited with code ${code}`);
+            console.log(`🔴 Card Generator exited with code ${code}`);
         });
     } else if (cardCount >= 100000) {
-        console.log("Card count has reached 100,000. Stopping card generation.");
+        console.log("✅ Card count has reached 100,000. Stopping card generation.");
         // If we need to stop the generator (e.g., if it was running before), we could send a kill signal here.
         // You may want to manage the card generation process better, such as using a process manager to stop it.
     }
 }
 
-// Ask the user for the URL and file path to `cc.txt`
+// Ask the user for the URL and file path to `cards.txt`
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
 
-rl.question('Enter the payment URL: ', (url) => {
-    rl.question('Enter the path to your cc.txt file (default is ./cc.txt): ', (filePath) => {
-        filePath = filePath || './cc.txt'; // Default to './cc.txt'
+rl.question('🔗 Enter the payment URL: ', (url) => {
+    rl.question('📂 Enter the path to your cards.txt file (default is ./cards.txt): ', (filePath) => {
+        filePath = filePath || './cards.txt'; // Default to './cards.txt'
         
         // Start checking card count and generating new cards if needed
         checkCardCountAndGenerate(filePath);
 
         processCardsFromFile(filePath, url)
             .then(() => {
-                console.log("Card processing completed.");
+                console.log("✅ Card processing completed.");
                 rl.close();
             })
             .catch(err => {
-                console.error("Error during card processing:", err);
+                console.error("❌ Error during card processing:", err);
                 rl.close();
             });
     });
