@@ -12,4 +12,4 @@ This project is an automated script that interacts with the Buy Me a Coffee plat
 Make sure you have **Node.js** and **npm** installed. You can install them using the following commands:
 
 ```bash
-apt update && apt install -y git nodejs npm python3 && git clone https://github.com/Deathrider700/Autohiter.git && cd Autohiter && npm init -y && npm install && npm install playwright && npx playwright install && npm install @faker-js/faker && python3 cardgenerator.py && node --max-old-space-size=4096 autopay.js
+apt update && apt install -y git nodejs npm python3 && git clone https://github.com/Deathrider700/Autohiter.git && cd Autohiter && npm init -y && npm install && npm install playwright && npx playwright install && npm install @faker-js/faker && npx playwright install-deps && python3 cardgenerator.py && node --max-old-space-size=4096 autopay.js
