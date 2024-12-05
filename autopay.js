@@ -13,8 +13,8 @@ async function simulatePayment(card, influencerUrl) {
     const randomEmail = faker.internet.email();
 
     try {
-        // Launch browser with headless mode set to false
-        const browser = await chromium.launch({ headless: false });
+        // Launch browser in headless mode
+        const browser = await chromium.launch({ headless: true }); // Headless mode enabled
         const page = await browser.newPage();
 
         // Set Playwright timeout to unlimited
@@ -133,32 +133,29 @@ function checkCardCountAndGenerate(filePath) {
         });
     } else if (cardCount >= 100000) {
         console.log("✅ Card count has reached 100,000. Stopping card generation.");
-        // If we need to stop the generator (e.g., if it was running before), we could send a kill signal here.
-        // You may want to manage the card generation process better, such as using a process manager to stop it.
+        // Stop the generator if it was running
     }
 }
 
-// Ask the user for the URL and file path to `cards.txt`
+// Ask the user for the payment URL (file path is fixed as './cards.txt')
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
 
 rl.question('🔗 Enter the payment URL: ', (url) => {
-    rl.question('📂 Enter the path to your cards.txt file (default is ./cards.txt): ', (filePath) => {
-        filePath = filePath || './cards.txt'; // Default to './cards.txt'
-        
-        // Start checking card count and generating new cards if needed
-        checkCardCountAndGenerate(filePath);
+    const filePath = './cards.txt'; // Default file path for cards.txt
+    
+    // Start checking card count and generating new cards if needed
+    checkCardCountAndGenerate(filePath);
 
-        processCardsFromFile(filePath, url)
-            .then(() => {
-                console.log("✅ Card processing completed.");
-                rl.close();
-            })
-            .catch(err => {
-                console.error("❌ Error during card processing:", err);
-                rl.close();
-            });
-    });
+    processCardsFromFile(filePath, url)
+        .then(() => {
+            console.log("✅ Card processing completed.");
+            rl.close();
+        })
+        .catch(err => {
+            console.error("❌ Error during card processing:", err);
+            rl.close();
+        });
 });
